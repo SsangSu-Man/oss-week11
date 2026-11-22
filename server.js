@@ -23,6 +23,12 @@ const CITIES = {
 
 const app = express();
 const port = process.env.PORT ?? 3000;
+const counts = {};
+
+if (!process.env.ADMIN_TOKEN) {
+  console.error("ADMIN_TOKEN is not set. Copy .env.example to .env.");
+  process.exit(1);
+}
 
 app.use(express.static("public"));
 
@@ -43,6 +49,7 @@ app.get("/api/forecast", async (req, res) => {
   }
 
   const city = CITIES[req.query.city];
+  counts[req.query.city] = (counts[req.query.city] ?? 0) + 1;
 
   try {
     const days = toDays(await getDaily(city));
@@ -50,4 +57,12 @@ app.get("/api/forecast", async (req, res) => {
   } catch (error) {
     res.status(502).json({ error: error.message });
   }
+});
+
+app.get("/api/stats", (req, res) => {
+  if (req.get("Authorization") !== `Bearer ${process.env.ADMIN_TOKEN}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  res.json(counts);
 });
