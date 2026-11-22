@@ -11,6 +11,7 @@
 
 import { test, expect } from "vitest";
 import { toDays } from "./public/logic.js";
+import { isGoodDay, summarize, reasons } from "./public/logic.js";
 
 // 주어짐: Open-Meteo 응답의 daily 와 같은 모양으로 손으로 만든 입력.
 // 기준 30 %, 10 km/h 에서 네 가지 경우가 하루씩 들어가게 고른 값입니다(P2 의 표).
@@ -29,3 +30,34 @@ test("toDays builds one object per day", () => {
 });
 
 // P2: 여기 아래에 테스트를 추가합니다. 위의 import 줄에 필요한 함수 이름도 추가합니다.
+test("good day when rain and wind are below limits", () => {
+  expect(isGoodDay(days[0], limits)).toBe(true);
+});
+
+test("good day when rain and wind are exactly the limits", () => {
+  expect(isGoodDay(days[1], limits)).toBe(true);
+});
+
+test("not a good day when only wind is above limit", () => {
+  expect(isGoodDay(days[2], limits)).toBe(false);
+});
+
+test("not a good day when only rain is above limit", () => {
+  expect(isGoodDay(days[3], limits)).toBe(false);
+});
+
+test("summarize reports the good day count and total day count", () => {
+  expect(summarize(days, limits)).toBe("good for a run on 2 of 4 days");
+});
+
+test("summarize works with no days", () => {
+  expect(summarize([], limits)).toBe("good for a run on 0 of 0 days");
+});
+
+test("reasons lists rain before wind when both are above limits", () => {
+  expect(reasons({ date: "x", max: 0, rain: 90, wind: 20 }, limits)).toEqual(["rain", "wind"]);
+});
+
+test("reasons is empty when rain and wind are exactly the limits", () => {
+  expect(reasons(days[1], limits)).toEqual([]);
+});
